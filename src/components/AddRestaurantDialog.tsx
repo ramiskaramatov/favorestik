@@ -11,9 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Star } from 'lucide-react';
+import { Star, Loader2 } from 'lucide-react';
 import { useRestaurantStore } from '@/store/restaurantStore';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AddRestaurantDialogProps {
   open: boolean;
@@ -74,69 +75,40 @@ export const AddRestaurantDialog = ({
 
     setIsLoadingMaps(true);
     try {
-      // Fetch the Google Maps page content
-      const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(googleMapsUrl)}`);
-      const html = await response.text();
+      console.log('Fetching place details from Google Maps...');
       
-      // Extract place name
-      const nameMatch = googleMapsUrl.match(/place\/([^/]+)/) || html.match(/<title>([^<]+)<\/title>/);
-      const placeName = nameMatch ? decodeURIComponent(nameMatch[1].replace(/\+/g, ' ').replace(' - Google Maps', '')) : '';
-      
-      // Try to extract additional data from the HTML
-      let cuisine = '';
-      let location = '';
-      let hours = '';
-      let website = '';
-      let photoUrl = '';
+      const { data, error } = await supabase.functions.invoke('google-places-autofill', {
+        body: { mapsUrl: googleMapsUrl }
+      });
 
-      // Extract address/location
-      const addressMatch = html.match(/\"address\":\"([^\"]+)\"/);
-      if (addressMatch) {
-        location = addressMatch[1].replace(/\\u[\dA-F]{4}/gi, '');
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
       }
 
-      // Extract website
-      const websiteMatch = html.match(/\"url\":\"(https?:\/\/[^\"]+)\"/);
-      if (websiteMatch && !websiteMatch[1].includes('google.com')) {
-        website = websiteMatch[1];
+      if (data.error) {
+        console.error('API error:', data.error);
+        throw new Error(data.error);
       }
 
-      // Extract photo
-      const photoMatch = html.match(/https:\/\/lh\d\.googleusercontent\.com\/[^\s\"]+/);
-      if (photoMatch) {
-        photoUrl = photoMatch[0];
-      }
+      console.log('Received data:', data);
 
-      // Extract cuisine type from categories
-      const categoryMatch = html.match(/\"category\":\"([^\"]+)\"/);
-      if (categoryMatch) {
-        cuisine = categoryMatch[1];
-      }
-
-      // Update form data with extracted information
+      // Update form with all extracted data
       setFormData(prev => ({
         ...prev,
-        name: placeName || prev.name,
-        cuisine: cuisine || prev.cuisine,
-        location: location || prev.location,
-        website: website || prev.website,
-        photoUrl: photoUrl || prev.photoUrl,
+        name: data.name || prev.name,
+        cuisine: data.cuisine || prev.cuisine,
+        location: data.location || prev.location,
+        hours: data.hours || prev.hours,
+        website: data.website || prev.website,
+        photoUrl: data.photoUrl || prev.photoUrl,
+        rating: data.rating || prev.rating,
       }));
 
-      toast.success('Data extracted from Google Maps!');
+      toast.success('Successfully loaded restaurant details from Google Maps!');
     } catch (error) {
-      console.error('Error extracting from Google Maps:', error);
-      
-      // Fallback: just extract name from URL
-      const urlMatch = googleMapsUrl.match(/place\/([^/]+)/);
-      const placeName = urlMatch ? decodeURIComponent(urlMatch[1].replace(/\+/g, ' ')) : '';
-      
-      if (placeName) {
-        setFormData(prev => ({ ...prev, name: placeName }));
-        toast.info('Extracted name from URL. Could not fetch other details.');
-      } else {
-        toast.error('Could not extract data from URL');
-      }
+      console.error('Error loading from Google Maps:', error);
+      toast.error(error.message || 'Failed to load data from Google Maps');
     } finally {
       setIsLoadingMaps(false);
     }
@@ -181,10 +153,12 @@ export const AddRestaurantDialog = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {!editingRestaurant && (
-            <div className="rounded-lg border bg-muted/50 p-4">
-              <Label htmlFor="googleMapsUrl">Quick Add from Google Maps</Label>
-              <p className="mb-2 text-xs text-muted-foreground">
-                Paste a Google Maps URL to auto-fill the name
+            <div className="rounded-lg border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 p-4">
+              <Label htmlFor="googleMapsUrl" className="text-base font-semibold">
+                🗺️ Quick Add from Google Maps
+              </Label>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Paste any Google Maps restaurant link to auto-fill all details
               </p>
               <div className="flex gap-2">
                 <Input
@@ -193,14 +167,24 @@ export const AddRestaurantDialog = ({
                   value={googleMapsUrl}
                   onChange={(e) => setGoogleMapsUrl(e.target.value)}
                   placeholder="https://maps.google.com/..."
+                  className="flex-1"
+                  disabled={isLoadingMaps}
                 />
                 <Button
                   type="button"
                   onClick={handleLoadFromGoogleMaps}
-                  disabled={isLoadingMaps}
-                  variant="secondary"
+                  disabled={isLoadingMaps || !googleMapsUrl}
+                  variant="default"
+                  className="min-w-[100px]"
                 >
-                  {isLoadingMaps ? 'Loading...' : 'Load'}
+                  {isLoadingMaps ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading
+                    </>
+                  ) : (
+                    'Auto-Fill'
+                  )}
                 </Button>
               </div>
             </div>
