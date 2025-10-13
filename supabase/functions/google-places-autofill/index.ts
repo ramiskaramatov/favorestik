@@ -21,15 +21,24 @@ serve(async (req) => {
 
     console.log('Processing Google Maps URL:', mapsUrl);
 
+    // Handle shortened URLs by following redirects
+    let finalUrl = mapsUrl;
+    if (mapsUrl.includes('maps.app.goo.gl') || mapsUrl.includes('goo.gl')) {
+      console.log('Shortened URL detected, following redirect...');
+      const redirectResponse = await fetch(mapsUrl, { redirect: 'follow' });
+      finalUrl = redirectResponse.url;
+      console.log('Resolved to:', finalUrl);
+    }
+
     // Extract place name from URL for text search
     let placeName = '';
-    const placeMatch = mapsUrl.match(/place\/([^/]+)/);
+    const placeMatch = finalUrl.match(/place\/([^/@]+)/);
     if (placeMatch) {
       placeName = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
     }
 
     if (!placeName) {
-      throw new Error('Could not extract place name from URL');
+      throw new Error('Could not extract place name from URL. Please use a full Google Maps URL or try copying the URL from your browser after the redirect.');
     }
 
     console.log('Searching for place:', placeName);
