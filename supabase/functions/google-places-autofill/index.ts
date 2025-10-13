@@ -38,39 +38,35 @@ serve(async (req) => {
     }
 
     if (!placeName) {
-      throw new Error('Could not extract place name from URL. Please use a full Google Maps URL or try copying the URL from your browser after the redirect.');
+      throw new Error('Could not extract place name from URL. Please use a full Google Maps URL.');
     }
 
     console.log('Searching for place:', placeName);
 
-    // Step 1: Find Place from Text to get place_id
-    const findPlaceUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(placeName)}&inputtype=textquery&fields=place_id&key=${apiKey}`;
+    // Use New Places API - Text Search
+    const searchUrl = 'https://places.googleapis.com/v1/places:searchText';
     
-    const findPlaceResponse = await fetch(findPlaceUrl);
-    const findPlaceData = await findPlaceResponse.json();
+    const searchResponse = await fetch(searchUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.regularOpeningHours,places.websiteUri,places.photos,places.types,places.rating'
+      },
+      body: JSON.stringify({
+        textQuery: placeName
+      })
+    });
 
-    console.log('Find Place API response:', findPlaceData);
+    const searchData = await searchResponse.json();
+    console.log('Search API response:', searchData);
 
-    if (findPlaceData.status !== 'OK' || !findPlaceData.candidates?.length) {
+    if (!searchData.places || searchData.places.length === 0) {
       throw new Error('Place not found');
     }
 
-    const placeId = findPlaceData.candidates[0].place_id;
-    console.log('Found place_id:', placeId);
-
-    // Step 2: Get Place Details
-    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,opening_hours,website,photos,types,rating&key=${apiKey}`;
-    
-    const detailsResponse = await fetch(detailsUrl);
-    const detailsData = await detailsResponse.json();
-
-    console.log('Place Details API response:', detailsData);
-
-    if (detailsData.status !== 'OK') {
-      throw new Error('Failed to fetch place details');
-    }
-
-    const place = detailsData.result;
+    const place = searchData.places[0];
+    console.log('Found place:', place.displayName);
 
     // Extract cuisine from types
     const cuisineTypes = place.types?.filter((type: string) => 
@@ -82,23 +78,23 @@ serve(async (req) => {
 
     // Format opening hours
     let hours = '';
-    if (place.opening_hours?.weekday_text) {
-      hours = place.opening_hours.weekday_text.join(', ');
+    if (place.regularOpeningHours?.weekdayDescriptions) {
+      hours = place.regularOpeningHours.weekdayDescriptions.join(', ');
     }
 
-    // Get photo URL
+    // Get photo URL using new API
     let photoUrl = '';
     if (place.photos && place.photos.length > 0) {
-      const photoReference = place.photos[0].photo_reference;
-      photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photoReference}&key=${apiKey}`;
+      const photoName = place.photos[0].name;
+      photoUrl = `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=800&key=${apiKey}`;
     }
 
     const result = {
-      name: place.name || '',
+      name: place.displayName?.text || '',
       cuisine: cuisine || '',
-      location: place.formatted_address || '',
+      location: place.formattedAddress || '',
       hours: hours,
-      website: place.website || '',
+      website: place.websiteUri || '',
       photoUrl: photoUrl,
       rating: place.rating || 3,
     };
