@@ -36,18 +36,31 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header />
 
-      <main className="container py-8">
-        <div className="mb-8 space-y-6">
-          <RandomPicker />
+      <main className="container py-8 px-4 md:px-6 lg:px-8">
+        <div className="mb-10 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <RandomPicker />
+          </motion.div>
 
-          <div className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="space-y-4"
+          >
             <ActionButtons onAddClick={handleAddClick} />
-            <SearchBar />
-            <FilterBar />
-          </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <SearchBar />
+              <FilterBar />
+            </div>
+          </motion.div>
         </div>
 
         {filteredRestaurants.length === 0 ? (
@@ -55,7 +68,7 @@ const Index = () => {
         ) : (
           <motion.div
             layout
-            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           >
             <AnimatePresence mode="popLayout">
               {filteredRestaurants.map((restaurant) => (
@@ -73,7 +86,7 @@ const Index = () => {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mt-6 text-center text-sm text-muted-foreground"
+            className="mt-8 text-center text-sm text-muted-foreground"
           >
             Showing {filteredRestaurants.length} restaurant{filteredRestaurants.length !== 1 ? 's' : ''}
           </motion.p>

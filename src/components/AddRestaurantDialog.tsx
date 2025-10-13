@@ -74,19 +74,69 @@ export const AddRestaurantDialog = ({
 
     setIsLoadingMaps(true);
     try {
-      // Extract place name from URL if possible
+      // Fetch the Google Maps page content
+      const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(googleMapsUrl)}`);
+      const html = await response.text();
+      
+      // Extract place name
+      const nameMatch = googleMapsUrl.match(/place\/([^/]+)/) || html.match(/<title>([^<]+)<\/title>/);
+      const placeName = nameMatch ? decodeURIComponent(nameMatch[1].replace(/\+/g, ' ').replace(' - Google Maps', '')) : '';
+      
+      // Try to extract additional data from the HTML
+      let cuisine = '';
+      let location = '';
+      let hours = '';
+      let website = '';
+      let photoUrl = '';
+
+      // Extract address/location
+      const addressMatch = html.match(/\"address\":\"([^\"]+)\"/);
+      if (addressMatch) {
+        location = addressMatch[1].replace(/\\u[\dA-F]{4}/gi, '');
+      }
+
+      // Extract website
+      const websiteMatch = html.match(/\"url\":\"(https?:\/\/[^\"]+)\"/);
+      if (websiteMatch && !websiteMatch[1].includes('google.com')) {
+        website = websiteMatch[1];
+      }
+
+      // Extract photo
+      const photoMatch = html.match(/https:\/\/lh\d\.googleusercontent\.com\/[^\s\"]+/);
+      if (photoMatch) {
+        photoUrl = photoMatch[0];
+      }
+
+      // Extract cuisine type from categories
+      const categoryMatch = html.match(/\"category\":\"([^\"]+)\"/);
+      if (categoryMatch) {
+        cuisine = categoryMatch[1];
+      }
+
+      // Update form data with extracted information
+      setFormData(prev => ({
+        ...prev,
+        name: placeName || prev.name,
+        cuisine: cuisine || prev.cuisine,
+        location: location || prev.location,
+        website: website || prev.website,
+        photoUrl: photoUrl || prev.photoUrl,
+      }));
+
+      toast.success('Data extracted from Google Maps!');
+    } catch (error) {
+      console.error('Error extracting from Google Maps:', error);
+      
+      // Fallback: just extract name from URL
       const urlMatch = googleMapsUrl.match(/place\/([^/]+)/);
       const placeName = urlMatch ? decodeURIComponent(urlMatch[1].replace(/\+/g, ' ')) : '';
       
       if (placeName) {
         setFormData(prev => ({ ...prev, name: placeName }));
-        toast.success('Extracted name from URL! Please fill in remaining details.');
+        toast.info('Extracted name from URL. Could not fetch other details.');
       } else {
-        toast.info('Could not extract data. Please fill in the details manually.');
+        toast.error('Could not extract data from URL');
       }
-    } catch (error) {
-      console.error('Error extracting from Google Maps:', error);
-      toast.error('Could not load data from URL');
     } finally {
       setIsLoadingMaps(false);
     }

@@ -17,6 +17,7 @@ import { useRestaurantStore } from '@/store/restaurantStore';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { VisitedRatingDialog } from './VisitedRatingDialog';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -24,8 +25,25 @@ interface RestaurantCardProps {
 }
 
 export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
-  const { toggleVisited, toggleFavorite, deleteRestaurant } = useRestaurantStore();
+  const { toggleVisited, toggleFavorite, deleteRestaurant, updateRestaurant } = useRestaurantStore();
   const [imageError, setImageError] = useState(false);
+  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+
+  const handleVisitedToggle = () => {
+    if (!restaurant.visited) {
+      // Opening rating dialog when marking as visited
+      setRatingDialogOpen(true);
+    } else {
+      // Unmark as visited
+      toggleVisited(restaurant.id);
+      toast.success('Marked as unvisited');
+    }
+  };
+
+  const handleRatingSubmit = (newRating: number) => {
+    updateRestaurant(restaurant.id, { rating: newRating, visited: true });
+    toast.success('Rated and marked as visited!');
+  };
 
   const handleShare = async () => {
     const text = `${restaurant.name} - ${restaurant.cuisine} cuisine (${restaurant.rating}⭐)\n${restaurant.location || ''}\n${restaurant.website || ''}`;
@@ -57,25 +75,30 @@ export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
+      transition={{ duration: 0.3 }}
     >
-      <Card className="group relative overflow-hidden border-2 transition-all hover:shadow-lg">
+      <Card className="group relative overflow-hidden border-2 transition-all hover:shadow-2xl hover:scale-[1.02] hover:border-primary/20">
         {restaurant.photoUrl && !imageError && (
-          <div className="aspect-video w-full overflow-hidden bg-muted">
+          <div className="aspect-video w-full overflow-hidden bg-gradient-to-br from-muted to-muted/50">
             <img
               src={restaurant.photoUrl}
               alt={restaurant.name}
-              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
               onError={() => setImageError(true)}
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
         )}
 
-        <CardContent className="p-4">
-          <div className="mb-3 flex items-start justify-between gap-2">
+        <CardContent className="p-5 space-y-4">
+          <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="truncate text-lg font-bold">{restaurant.name}</h3>
-              <p className="text-sm text-muted-foreground">{restaurant.cuisine}</p>
+              <h3 className="truncate text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                {restaurant.name}
+              </h3>
+              <Badge variant="secondary" className="mt-1 text-xs font-medium px-3 py-1">
+                {restaurant.cuisine}
+              </Badge>
             </div>
 
             <Button
@@ -93,26 +116,26 @@ export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
           </div>
 
           {restaurant.visited ? (
-            <div className="mb-3 flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-4 w-4 ${
+                  className={`h-5 w-5 transition-all ${
                     i < restaurant.rating
-                      ? 'fill-accent text-accent'
+                      ? 'fill-yellow-400 text-yellow-400 drop-shadow-lg'
                       : 'text-muted-foreground/30'
                   }`}
                 />
               ))}
             </div>
           ) : (
-            <div className="mb-3 flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <div className="flex gap-0.5">
                 {Array.from({ length: restaurant.rating }).map((_, i) => (
-                  <span key={i} className="text-lg">🔥</span>
+                  <span key={i} className="text-xl animate-pulse" style={{ animationDelay: `${i * 100}ms` }}>🔥</span>
                 ))}
               </div>
-              <span className="text-sm text-muted-foreground">Can't wait to try!</span>
+              <span className="text-xs font-medium text-muted-foreground">Excitement Level</span>
             </div>
           )}
 
@@ -136,11 +159,11 @@ export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
             </p>
           )}
 
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             <Badge
               variant={restaurant.visited ? 'default' : 'secondary'}
-              className="cursor-pointer"
-              onClick={() => toggleVisited(restaurant.id)}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={handleVisitedToggle}
             >
               {restaurant.visited ? (
                 <>
@@ -148,7 +171,7 @@ export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
                   Visited
                 </>
               ) : (
-                'Not visited'
+                'Mark as Visited'
               )}
             </Badge>
 
@@ -200,6 +223,13 @@ export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
             </Button>
           </div>
         </CardContent>
+
+        <VisitedRatingDialog
+          open={ratingDialogOpen}
+          onOpenChange={setRatingDialogOpen}
+          onSubmit={handleRatingSubmit}
+          currentRating={restaurant.rating}
+        />
       </Card>
     </motion.div>
   );
