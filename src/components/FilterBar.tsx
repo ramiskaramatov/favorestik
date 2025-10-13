@@ -33,12 +33,12 @@ export const FilterBar = () => {
         </Select>
 
         {cuisines.length > 0 && (
-          <Select value={cuisineFilter} onValueChange={setCuisineFilter}>
+          <Select value={cuisineFilter || "all"} onValueChange={(value) => setCuisineFilter(value === "all" ? "" : value)}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="All cuisines" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All cuisines</SelectItem>
+              <SelectItem value="all">All cuisines</SelectItem>
               {cuisines.map((cuisine) => (
                 <SelectItem key={cuisine} value={cuisine}>
                   {cuisine}
