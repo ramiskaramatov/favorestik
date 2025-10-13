@@ -37,6 +37,8 @@ export const AddRestaurantDialog = ({
     hours: '',
     location: '',
   });
+  const [googleMapsUrl, setGoogleMapsUrl] = useState('');
+  const [isLoadingMaps, setIsLoadingMaps] = useState(false);
 
   useEffect(() => {
     if (editingRestaurant) {
@@ -63,6 +65,32 @@ export const AddRestaurantDialog = ({
       });
     }
   }, [editingRestaurant, open]);
+
+  const handleLoadFromGoogleMaps = async () => {
+    if (!googleMapsUrl) {
+      toast.error('Please enter a Google Maps URL');
+      return;
+    }
+
+    setIsLoadingMaps(true);
+    try {
+      // Extract place name from URL if possible
+      const urlMatch = googleMapsUrl.match(/place\/([^/]+)/);
+      const placeName = urlMatch ? decodeURIComponent(urlMatch[1].replace(/\+/g, ' ')) : '';
+      
+      if (placeName) {
+        setFormData(prev => ({ ...prev, name: placeName }));
+        toast.success('Extracted name from URL! Please fill in remaining details.');
+      } else {
+        toast.info('Could not extract data. Please fill in the details manually.');
+      }
+    } catch (error) {
+      console.error('Error extracting from Google Maps:', error);
+      toast.error('Could not load data from URL');
+    } finally {
+      setIsLoadingMaps(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,6 +130,32 @@ export const AddRestaurantDialog = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!editingRestaurant && (
+            <div className="rounded-lg border bg-muted/50 p-4">
+              <Label htmlFor="googleMapsUrl">Quick Add from Google Maps</Label>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Paste a Google Maps URL to auto-fill the name
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  id="googleMapsUrl"
+                  type="url"
+                  value={googleMapsUrl}
+                  onChange={(e) => setGoogleMapsUrl(e.target.value)}
+                  placeholder="https://maps.google.com/..."
+                />
+                <Button
+                  type="button"
+                  onClick={handleLoadFromGoogleMaps}
+                  disabled={isLoadingMaps}
+                  variant="secondary"
+                >
+                  {isLoadingMaps ? 'Loading...' : 'Load'}
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div>
             <Label htmlFor="name">
               Name <span className="text-destructive">*</span>
@@ -129,25 +183,22 @@ export const AddRestaurantDialog = ({
           </div>
 
           <div>
-            <Label>Rating</Label>
+            <Label>Excitement Level (How bad you want to try it!)</Label>
             <div className="flex gap-2">
               {Array.from({ length: 5 }).map((_, i) => (
                 <button
                   key={i}
                   type="button"
                   onClick={() => setFormData({ ...formData, rating: i + 1 })}
-                  className="transition-transform hover:scale-110"
+                  className="text-2xl transition-transform hover:scale-110"
                 >
-                  <Star
-                    className={`h-8 w-8 ${
-                      i < formData.rating
-                        ? 'fill-accent text-accent'
-                        : 'text-muted-foreground/30'
-                    }`}
-                  />
+                  {i < formData.rating ? '🔥' : '⚪'}
                 </button>
               ))}
             </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              This becomes the star rating once you mark it as visited
+            </p>
           </div>
 
           <div>

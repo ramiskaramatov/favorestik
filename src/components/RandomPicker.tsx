@@ -77,8 +77,17 @@ export const RandomPicker = () => {
             exit={{ opacity: 0, y: -20, scale: 0.9 }}
             transition={{ type: 'spring', damping: 20 }}
           >
-            <Card className="border-2 border-primary bg-gradient-to-br from-primary/5 to-accent/5">
+            <Card className="relative border-2 border-primary bg-gradient-to-br from-primary/5 to-accent/5">
               <CardContent className="p-6">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-2 h-6 w-6"
+                  onClick={() => setSelectedRestaurant(null)}
+                >
+                  <span className="sr-only">Close</span>
+                  ✕
+                </Button>
                 <div className="mb-2 flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
                   <p className="text-sm font-medium text-muted-foreground">

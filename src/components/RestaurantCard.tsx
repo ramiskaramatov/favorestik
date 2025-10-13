@@ -92,18 +92,29 @@ export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
             </Button>
           </div>
 
-          <div className="mb-3 flex items-center gap-1">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={`h-4 w-4 ${
-                  i < restaurant.rating
-                    ? 'fill-accent text-accent'
-                    : 'text-muted-foreground/30'
-                }`}
-              />
-            ))}
-          </div>
+          {restaurant.visited ? (
+            <div className="mb-3 flex items-center gap-1">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className={`h-4 w-4 ${
+                    i < restaurant.rating
+                      ? 'fill-accent text-accent'
+                      : 'text-muted-foreground/30'
+                  }`}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="mb-3 flex items-center gap-2">
+              <div className="flex gap-0.5">
+                {Array.from({ length: restaurant.rating }).map((_, i) => (
+                  <span key={i} className="text-lg">🔥</span>
+                ))}
+              </div>
+              <span className="text-sm text-muted-foreground">Can't wait to try!</span>
+            </div>
+          )}
 
           {restaurant.location && (
             <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
