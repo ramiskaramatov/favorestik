@@ -30,6 +30,7 @@ export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
 
   const handleVisitedToggle = () => {
+    console.log('handleVisitedToggle clicked for:', restaurant.name);
     if (!restaurant.visited) {
       // Opening rating dialog when marking as visited
       setRatingDialogOpen(true);
@@ -46,6 +47,7 @@ export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
   };
 
   const handleShare = async () => {
+    console.log('handleShare clicked for:', restaurant.name);
     const text = `${restaurant.name} - ${restaurant.cuisine} cuisine (${restaurant.rating}⭐)\n${restaurant.location || ''}\n${restaurant.website || ''}`;
     
     if (navigator.share) {
@@ -62,6 +64,7 @@ export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
   };
 
   const handleDelete = () => {
+    console.log('handleDelete clicked for:', restaurant.name);
     if (window.confirm(`Delete ${restaurant.name}?`)) {
       deleteRestaurant(restaurant.id);
       toast.success('Restaurant deleted');
@@ -104,7 +107,10 @@ export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
             <Button
               size="icon"
               variant="ghost"
-              onClick={() => toggleFavorite(restaurant.id)}
+              onClick={() => {
+                console.log('toggleFavorite clicked for:', restaurant.name);
+                toggleFavorite(restaurant.id);
+              }}
               className="shrink-0"
             >
               <Heart
@@ -208,7 +214,10 @@ export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onEdit(restaurant)}
+              onClick={() => {
+                console.log('onEdit clicked for:', restaurant.name);
+                onEdit(restaurant);
+              }}
             >
               <Edit className="h-3 w-3" />
             </Button>
