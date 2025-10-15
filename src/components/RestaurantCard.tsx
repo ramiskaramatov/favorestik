@@ -17,34 +17,16 @@ import { useRestaurantStore } from '@/store/restaurantStore';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { VisitedRatingDialog } from './VisitedRatingDialog';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
   onEdit: (restaurant: Restaurant) => void;
+  onVisitedToggle: (restaurant: Restaurant) => void;
 }
 
-export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
-  const { toggleVisited, toggleFavorite, deleteRestaurant, updateRestaurant } = useRestaurantStore();
+export const RestaurantCard = ({ restaurant, onEdit, onVisitedToggle }: RestaurantCardProps) => {
+  const { toggleFavorite, deleteRestaurant } = useRestaurantStore();
   const [imageError, setImageError] = useState(false);
-  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
-
-  const handleVisitedToggle = () => {
-    console.log('handleVisitedToggle clicked for:', restaurant.name);
-    if (!restaurant.visited) {
-      // Opening rating dialog when marking as visited
-      setRatingDialogOpen(true);
-    } else {
-      // Unmark as visited
-      toggleVisited(restaurant.id);
-      toast.success('Marked as unvisited');
-    }
-  };
-
-  const handleRatingSubmit = (newRating: number) => {
-    updateRestaurant(restaurant.id, { rating: newRating, visited: true });
-    toast.success('Rated and marked as visited!');
-  };
 
   const handleShare = async () => {
     console.log('handleShare clicked for:', restaurant.name);
@@ -169,7 +151,7 @@ export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
             <Badge
               variant={restaurant.visited ? 'default' : 'secondary'}
               className="cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={handleVisitedToggle}
+              onClick={() => onVisitedToggle(restaurant)}
             >
               {restaurant.visited ? (
                 <>
@@ -232,13 +214,6 @@ export const RestaurantCard = ({ restaurant, onEdit }: RestaurantCardProps) => {
             </Button>
           </div>
         </CardContent>
-
-        <VisitedRatingDialog
-          open={ratingDialogOpen}
-          onOpenChange={setRatingDialogOpen}
-          onSubmit={handleRatingSubmit}
-          currentRating={restaurant.rating}
-        />
       </Card>
     </motion.div>
   );

@@ -4,17 +4,21 @@ import { SearchBar } from '@/components/SearchBar';
 import { FilterBar } from '@/components/FilterBar';
 import { RestaurantCard } from '@/components/RestaurantCard';
 import { AddRestaurantDialog } from '@/components/AddRestaurantDialog';
+import { VisitedRatingDialog } from '@/components/VisitedRatingDialog';
 import { RandomPicker } from '@/components/RandomPicker';
 import { ActionButtons } from '@/components/ActionButtons';
 import { EmptyState } from '@/components/EmptyState';
 import { useRestaurantStore } from '@/store/restaurantStore';
 import { Restaurant } from '@/types/restaurant';
 import { AnimatePresence, motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 const Index = () => {
-  const { getFilteredRestaurants } = useRestaurantStore();
+  const { getFilteredRestaurants, updateRestaurant, toggleVisited } = useRestaurantStore();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRestaurant, setEditingRestaurant] = useState<Restaurant | null>(null);
+  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+  const [ratingRestaurant, setRatingRestaurant] = useState<Restaurant | null>(null);
 
   const filteredRestaurants = getFilteredRestaurants();
 
@@ -32,6 +36,24 @@ const Index = () => {
     setDialogOpen(open);
     if (!open) {
       setEditingRestaurant(null);
+    }
+  };
+
+  const handleVisitedToggle = (restaurant: Restaurant) => {
+    if (!restaurant.visited) {
+      setRatingRestaurant(restaurant);
+      setRatingDialogOpen(true);
+    } else {
+      toggleVisited(restaurant.id);
+      toast.success('Marked as unvisited');
+    }
+  };
+
+  const handleRatingSubmit = (newRating: number) => {
+    if (ratingRestaurant) {
+      updateRestaurant(ratingRestaurant.id, { rating: newRating, visited: true });
+      toast.success('Rated and marked as visited!');
+      setRatingRestaurant(null);
     }
   };
 
@@ -76,6 +98,7 @@ const Index = () => {
                   key={restaurant.id}
                   restaurant={restaurant}
                   onEdit={handleEditClick}
+                  onVisitedToggle={handleVisitedToggle}
                 />
               ))}
             </AnimatePresence>
@@ -97,6 +120,13 @@ const Index = () => {
         open={dialogOpen}
         onOpenChange={handleDialogClose}
         editingRestaurant={editingRestaurant}
+      />
+      
+      <VisitedRatingDialog
+        open={ratingDialogOpen}
+        onOpenChange={setRatingDialogOpen}
+        onSubmit={handleRatingSubmit}
+        currentRating={ratingRestaurant?.rating || 3}
       />
     </div>
   );
