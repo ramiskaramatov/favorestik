@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { SearchBar } from '@/components/SearchBar';
 import { FilterBar } from '@/components/FilterBar';
@@ -12,13 +13,33 @@ import { useRestaurantStore } from '@/store/restaurantStore';
 import { Restaurant } from '@/types/restaurant';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
-  const { getFilteredRestaurants, updateRestaurant, toggleVisited } = useRestaurantStore();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { getFilteredRestaurants, updateRestaurant, toggleVisited, fetchRestaurants, loading: dataLoading } = useRestaurantStore();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRestaurant, setEditingRestaurant] = useState<Restaurant | null>(null);
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
   const [ratingRestaurant, setRatingRestaurant] = useState<Restaurant | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth');
+    } else if (user) {
+      fetchRestaurants();
+    }
+  }, [user, authLoading, navigate, fetchRestaurants]);
+
+  if (authLoading || dataLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const filteredRestaurants = getFilteredRestaurants();
 

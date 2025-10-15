@@ -1,9 +1,11 @@
-import { Moon, Sun, UtensilsCrossed } from 'lucide-react';
+import { Moon, Sun, UtensilsCrossed, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/hooks/useAuth';
 
 export const Header = () => {
   const { theme, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-sm">
@@ -16,22 +18,39 @@ export const Header = () => {
             <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Favorestik
             </h1>
-            <p className="text-sm text-muted-foreground">Discover & track your favorite spots</p>
+            {user ? (
+              <p className="text-xs text-muted-foreground">{user.email}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">Discover & track your favorite spots</p>
+            )}
           </div>
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleTheme}
-          className="rounded-full hover:bg-accent/20 transition-colors"
-        >
-          {theme === 'dark' ? (
-            <Sun className="h-5 w-5" />
-          ) : (
-            <Moon className="h-5 w-5" />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="rounded-full hover:bg-accent/20 transition-colors"
+          >
+            {theme === 'dark' ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+          </Button>
+
+          {user && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={signOut}
+              className="rounded-full hover:bg-accent/20 transition-colors"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
           )}
-        </Button>
+        </div>
       </div>
     </header>
   );

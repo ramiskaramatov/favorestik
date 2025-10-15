@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { Restaurant, SortOption, FilterOption } from '@/types/restaurant';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface RestaurantStore {
   restaurants: Restaurant[];
@@ -8,111 +9,228 @@ interface RestaurantStore {
   sortBy: SortOption;
   filterBy: FilterOption;
   cuisineFilter: string;
+  loading: boolean;
   
   // Actions
-  addRestaurant: (restaurant: Omit<Restaurant, 'id' | 'createdAt'>) => void;
-  updateRestaurant: (id: string, updates: Partial<Restaurant>) => void;
-  deleteRestaurant: (id: string) => void;
-  toggleVisited: (id: string) => void;
-  toggleFavorite: (id: string) => void;
-  clearAll: () => void;
+  fetchRestaurants: () => Promise<void>;
+  addRestaurant: (restaurant: Omit<Restaurant, 'id' | 'createdAt'>) => Promise<void>;
+  updateRestaurant: (id: string, updates: Partial<Restaurant>) => Promise<void>;
+  deleteRestaurant: (id: string) => Promise<void>;
+  toggleVisited: (id: string) => Promise<void>;
+  toggleFavorite: (id: string) => Promise<void>;
+  clearAll: () => Promise<void>;
   setSearchQuery: (query: string) => void;
   setSortBy: (sort: SortOption) => void;
   setFilterBy: (filter: FilterOption) => void;
   setCuisineFilter: (cuisine: string) => void;
-  importRestaurants: (restaurants: Restaurant[]) => void;
   
   // Computed
   getFilteredRestaurants: () => Restaurant[];
   getCuisines: () => string[];
 }
 
-const initialRestaurants: Restaurant[] = [
-  {
-    id: '1',
-    name: 'Padella',
-    cuisine: 'Italian',
-    rating: 5,
-    visited: false,
-    favorite: true,
-    notes: 'Fresh pasta heaven',
-    photoUrl: '',
-    website: 'https://padella.co',
-    hours: '12:00 PM - 10:00 PM',
-    location: 'Borough Market, London',
-    createdAt: new Date().toISOString(),
+export const useRestaurantStore = create<RestaurantStore>()((set, get) => ({
+  restaurants: [],
+  searchQuery: '',
+  sortBy: 'date-desc',
+  filterBy: 'all',
+  cuisineFilter: '',
+  loading: false,
+
+  fetchRestaurants: async () => {
+    set({ loading: true });
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      set({ restaurants: [], loading: false });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('restaurants')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast.error('Failed to load restaurants');
+      set({ loading: false });
+      return;
+    }
+
+    const restaurants: Restaurant[] = (data || []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      cuisine: r.cuisine,
+      rating: r.rating,
+      visited: r.visited,
+      favorite: r.favorite,
+      notes: r.notes,
+      photoUrl: r.photo_url,
+      website: r.website,
+      hours: r.hours,
+      location: r.location,
+      createdAt: r.created_at,
+    }));
+
+    set({ restaurants, loading: false });
   },
-  {
-    id: '2',
-    name: 'Dishoom',
-    cuisine: 'Indian',
-    rating: 4,
-    visited: false,
-    favorite: false,
-    notes: 'Bombay-style café',
-    photoUrl: '',
-    website: 'https://dishoom.com',
-    hours: '8:00 AM - 11:00 PM',
-    location: 'Shoreditch, London',
-    createdAt: new Date().toISOString(),
+
+  addRestaurant: async (restaurant) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('restaurants')
+      .insert({
+        user_id: user.id,
+        name: restaurant.name,
+        cuisine: restaurant.cuisine,
+        rating: restaurant.rating,
+        visited: restaurant.visited,
+        favorite: restaurant.favorite,
+        notes: restaurant.notes,
+        photo_url: restaurant.photoUrl,
+        website: restaurant.website,
+        hours: restaurant.hours,
+        location: restaurant.location,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast.error('Failed to add restaurant');
+      return;
+    }
+
+    const newRestaurant: Restaurant = {
+      id: data.id,
+      name: data.name,
+      cuisine: data.cuisine,
+      rating: data.rating,
+      visited: data.visited,
+      favorite: data.favorite,
+      notes: data.notes,
+      photoUrl: data.photo_url,
+      website: data.website,
+      hours: data.hours,
+      location: data.location,
+      createdAt: data.created_at,
+    };
+
+    set((state) => ({
+      restaurants: [newRestaurant, ...state.restaurants],
+    }));
   },
-];
 
-export const useRestaurantStore = create<RestaurantStore>()(
-  persist(
-    (set, get) => ({
-      restaurants: initialRestaurants,
-      searchQuery: '',
-      sortBy: 'date-desc',
-      filterBy: 'all',
-      cuisineFilter: '',
+  updateRestaurant: async (id, updates) => {
+    const { error } = await supabase
+      .from('restaurants')
+      .update({
+        name: updates.name,
+        cuisine: updates.cuisine,
+        rating: updates.rating,
+        visited: updates.visited,
+        favorite: updates.favorite,
+        notes: updates.notes,
+        photo_url: updates.photoUrl,
+        website: updates.website,
+        hours: updates.hours,
+        location: updates.location,
+      })
+      .eq('id', id);
 
-      addRestaurant: (restaurant) =>
-        set((state) => ({
-          restaurants: [
-            {
-              ...restaurant,
-              id: crypto.randomUUID(),
-              createdAt: new Date().toISOString(),
-            },
-            ...state.restaurants,
-          ],
-        })),
+    if (error) {
+      toast.error('Failed to update restaurant');
+      return;
+    }
 
-      updateRestaurant: (id, updates) =>
-        set((state) => ({
-          restaurants: state.restaurants.map((r) =>
-            r.id === id ? { ...r, ...updates } : r
-          ),
-        })),
+    set((state) => ({
+      restaurants: state.restaurants.map((r) =>
+        r.id === id ? { ...r, ...updates } : r
+      ),
+    }));
+  },
 
-      deleteRestaurant: (id) =>
-        set((state) => ({
-          restaurants: state.restaurants.filter((r) => r.id !== id),
-        })),
+  deleteRestaurant: async (id) => {
+    const { error } = await supabase
+      .from('restaurants')
+      .delete()
+      .eq('id', id);
 
-      toggleVisited: (id) =>
-        set((state) => ({
-          restaurants: state.restaurants.map((r) =>
-            r.id === id ? { ...r, visited: !r.visited } : r
-          ),
-        })),
+    if (error) {
+      toast.error('Failed to delete restaurant');
+      return;
+    }
 
-      toggleFavorite: (id) =>
-        set((state) => ({
-          restaurants: state.restaurants.map((r) =>
-            r.id === id ? { ...r, favorite: !r.favorite } : r
-          ),
-        })),
+    set((state) => ({
+      restaurants: state.restaurants.filter((r) => r.id !== id),
+    }));
+  },
 
-      clearAll: () => set({ restaurants: [] }),
+  toggleVisited: async (id) => {
+    const restaurant = get().restaurants.find((r) => r.id === id);
+    if (!restaurant) return;
 
-      setSearchQuery: (query) => set({ searchQuery: query }),
-      setSortBy: (sort) => set({ sortBy: sort }),
-      setFilterBy: (filter) => set({ filterBy: filter }),
-      setCuisineFilter: (cuisine) => set({ cuisineFilter: cuisine }),
+    const { error } = await supabase
+      .from('restaurants')
+      .update({ visited: !restaurant.visited })
+      .eq('id', id);
 
-      importRestaurants: (restaurants) => set({ restaurants }),
+    if (error) {
+      toast.error('Failed to update restaurant');
+      return;
+    }
+
+    set((state) => ({
+      restaurants: state.restaurants.map((r) =>
+        r.id === id ? { ...r, visited: !r.visited } : r
+      ),
+    }));
+  },
+
+  toggleFavorite: async (id) => {
+    const restaurant = get().restaurants.find((r) => r.id === id);
+    if (!restaurant) return;
+
+    const { error } = await supabase
+      .from('restaurants')
+      .update({ favorite: !restaurant.favorite })
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Failed to update restaurant');
+      return;
+    }
+
+    set((state) => ({
+      restaurants: state.restaurants.map((r) =>
+        r.id === id ? { ...r, favorite: !r.favorite } : r
+      ),
+    }));
+  },
+
+  clearAll: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('restaurants')
+      .delete()
+      .eq('user_id', user.id);
+
+    if (error) {
+      toast.error('Failed to clear restaurants');
+      return;
+    }
+
+    set({ restaurants: [] });
+  },
+
+  setSearchQuery: (query) => set({ searchQuery: query }),
+  setSortBy: (sort) => set({ sortBy: sort }),
+  setFilterBy: (filter) => set({ filterBy: filter }),
+  setCuisineFilter: (cuisine) => set({ cuisineFilter: cuisine }),
 
       getFilteredRestaurants: () => {
         const { restaurants, searchQuery, sortBy, filterBy, cuisineFilter } = get();
@@ -167,13 +285,8 @@ export const useRestaurantStore = create<RestaurantStore>()(
         return filtered;
       },
 
-      getCuisines: () => {
-        const { restaurants } = get();
-        return [...new Set(restaurants.map((r) => r.cuisine))].sort();
-      },
-    }),
-    {
-      name: 'favorestik-storage',
-    }
-  )
-);
+  getCuisines: () => {
+    const { restaurants } = get();
+    return [...new Set(restaurants.map((r) => r.cuisine))].sort();
+  },
+}));

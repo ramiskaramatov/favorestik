@@ -14,7 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      restaurants: {
+        Row: {
+          created_at: string
+          cuisine: string
+          favorite: boolean | null
+          hours: string | null
+          id: string
+          location: string | null
+          name: string
+          notes: string | null
+          photo_url: string | null
+          rating: number | null
+          updated_at: string
+          user_id: string
+          visited: boolean | null
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          cuisine: string
+          favorite?: boolean | null
+          hours?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          notes?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          updated_at?: string
+          user_id: string
+          visited?: boolean | null
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          cuisine?: string
+          favorite?: boolean | null
+          hours?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          notes?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          updated_at?: string
+          user_id?: string
+          visited?: boolean | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
