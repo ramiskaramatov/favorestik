@@ -15,8 +15,7 @@ import {
 } from 'lucide-react';
 import { useRestaurantStore } from '@/store/restaurantStore';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
-import { useState, forwardRef } from 'react';
+import { useState } from 'react';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -24,10 +23,9 @@ interface RestaurantCardProps {
   onVisitedToggle: (restaurant: Restaurant) => void;
 }
 
-export const RestaurantCard = forwardRef<HTMLDivElement, RestaurantCardProps>(
-  ({ restaurant, onEdit, onVisitedToggle }, ref) => {
-    const { toggleFavorite, deleteRestaurant } = useRestaurantStore();
-    const [imageError, setImageError] = useState(false);
+export const RestaurantCard = ({ restaurant, onEdit, onVisitedToggle }: RestaurantCardProps) => {
+  const { toggleFavorite, deleteRestaurant } = useRestaurantStore();
+  const [imageError, setImageError] = useState(false);
 
   const handleShare = async () => {
     console.log('handleShare clicked for:', restaurant.name);
@@ -55,25 +53,16 @@ export const RestaurantCard = forwardRef<HTMLDivElement, RestaurantCardProps>(
   };
 
   return (
-    <motion.div
-      ref={ref}
-      layout
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Card className="group relative overflow-hidden border-2 transition-all hover:shadow-2xl hover:scale-[1.02] hover:border-primary/20">
+    <div className="animate-in fade-in zoom-in-95 duration-300">
+      <Card className="group relative overflow-hidden border-2 transition-all hover:shadow-2xl hover:-translate-y-1 hover:border-primary/20">
         {restaurant.photoUrl && !imageError && (
-          <div className="aspect-video w-full overflow-hidden bg-gradient-to-br from-muted to-muted/50">
+          <div className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-muted to-muted/50">
             <img
               src={restaurant.photoUrl}
               alt={restaurant.name}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
               onError={() => setImageError(true)}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
         )}
 
@@ -217,8 +206,6 @@ export const RestaurantCard = forwardRef<HTMLDivElement, RestaurantCardProps>(
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
-});
-
-RestaurantCard.displayName = 'RestaurantCard';
+};

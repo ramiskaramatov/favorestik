@@ -10,7 +10,7 @@ import { ActionButtons } from '@/components/ActionButtons';
 import { EmptyState } from '@/components/EmptyState';
 import { useRestaurantStore } from '@/store/restaurantStore';
 import { Restaurant } from '@/types/restaurant';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -88,21 +88,16 @@ const Index = () => {
         {filteredRestaurants.length === 0 ? (
           <EmptyState onAddClick={handleAddClick} />
         ) : (
-          <motion.div
-            layout
-            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-          >
-            <AnimatePresence mode="popLayout">
-              {filteredRestaurants.map((restaurant) => (
-                <RestaurantCard
-                  key={restaurant.id}
-                  restaurant={restaurant}
-                  onEdit={handleEditClick}
-                  onVisitedToggle={handleVisitedToggle}
-                />
-              ))}
-            </AnimatePresence>
-          </motion.div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredRestaurants.map((restaurant) => (
+              <RestaurantCard
+                key={restaurant.id}
+                restaurant={restaurant}
+                onEdit={handleEditClick}
+                onVisitedToggle={handleVisitedToggle}
+              />
+            ))}
+          </div>
         )}
 
         {filteredRestaurants.length > 0 && (
