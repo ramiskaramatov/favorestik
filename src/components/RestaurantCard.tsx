@@ -16,7 +16,7 @@ import {
 import { useRestaurantStore } from '@/store/restaurantStore';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -24,9 +24,10 @@ interface RestaurantCardProps {
   onVisitedToggle: (restaurant: Restaurant) => void;
 }
 
-export const RestaurantCard = ({ restaurant, onEdit, onVisitedToggle }: RestaurantCardProps) => {
-  const { toggleFavorite, deleteRestaurant } = useRestaurantStore();
-  const [imageError, setImageError] = useState(false);
+export const RestaurantCard = forwardRef<HTMLDivElement, RestaurantCardProps>(
+  ({ restaurant, onEdit, onVisitedToggle }, ref) => {
+    const { toggleFavorite, deleteRestaurant } = useRestaurantStore();
+    const [imageError, setImageError] = useState(false);
 
   const handleShare = async () => {
     console.log('handleShare clicked for:', restaurant.name);
@@ -55,6 +56,7 @@ export const RestaurantCard = ({ restaurant, onEdit, onVisitedToggle }: Restaura
 
   return (
     <motion.div
+      ref={ref}
       layout
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -217,4 +219,6 @@ export const RestaurantCard = ({ restaurant, onEdit, onVisitedToggle }: Restaura
       </Card>
     </motion.div>
   );
-};
+});
+
+RestaurantCard.displayName = 'RestaurantCard';
