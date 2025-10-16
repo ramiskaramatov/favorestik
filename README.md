@@ -1,54 +1,32 @@
-# Welcome to your Lovable project
+# Favorestik - Restaurant Wishlist App
 
-## Project info
+## About
 
-**URL**: https://lovable.dev/projects/5dfee817-75fa-46c5-9469-c6dc4775de42
+A modern restaurant wishlist application to discover, track, and manage restaurants you want to visit.
 
-## How can I edit this code?
+## Development
 
-There are several ways of editing your application.
+### Local Setup
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/5dfee817-75fa-46c5-9469-c6dc4775de42) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Clone this repository and install dependencies:
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
 Follow these steps:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate to the project directory
+cd favorestik
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
 
 ## What technologies are used for this project?
 
@@ -60,14 +38,22 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## Features
 
-Simply open [Lovable](https://lovable.dev/projects/5dfee817-75fa-46c5-9469-c6dc4775de42) and click on Share -> Publish.
+- User authentication and personal restaurant lists
+- Add, edit, and delete restaurants
+- Mark restaurants as visited or favorite
+- Search and filter by cuisine, name, or location
+- Random restaurant picker
+- Rating system
+- Notes and additional details
 
-## Can I connect a custom domain to my Lovable project?
+## Deployment
 
-Yes, you can!
+Build the production version:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```sh
+npm run build
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+The built files will be in the `dist` directory, ready to be deployed to any static hosting service.
